@@ -6,15 +6,15 @@ const router = express.Router();
 let usuarios = [];
 
 router.get("/", async (req, res) => {
-  res.send("users", { usuarios });
+  res.status(200).json({ users: usuarios });
 });
 
 router.post("/", async (req, res) => {
   try {
     let usuario = req.body;
     usuarios.push(usuario);
-    console.log(usuarios);
-    res.send({ messsage: "Usuario criado" });
+
+    res.status(201).json({ messsage: "Usuario criado" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -26,11 +26,12 @@ router.post("/upload", upload.single("file"), function (req, res) {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    console.log(req.file.path);
+    console.log(req.file);
 
-    let ussuario = req.body;
-    ussuario.profile = req.file.path;
-    usuarios.push(ussuario);
+    let usuario = req.body;
+    const host = "http://localhost:8080"
+    usuario.profile = `${host}/${req.file.filename}`;
+    usuarios.push(usuario);
     console.log(usuarios);
     res.send({ messsage: "Usuario criado" });
   } catch (error) {
