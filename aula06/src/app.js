@@ -19,21 +19,29 @@ app.set("views", path.join(__dirname, "views"));
 app.use(express.static(path.join(__dirname, "public")));
 app.use('/', viewsRouter);
 
-io.on('connection', (socket) => {
-  console.log('Novo cliente conectado', socket.id);
-  
-  socket.on('message', (data) => {
-    console.log('Mensagem recebida: ', data);
+const mensagens = [];
+io.on('connection', socket => {
+  console.log(`Novo cliente conectado: ${socket.id}`);
+
+  // Cliente enviará seu nome após o modal
+  socket.on('authenticated', username => {
+    socket.username = username;
+
+    // Envia histórico de mensagens apenas ao novo usuário
+    socket.emit('messages', mensagens);
+
+    // Notifica outros usuários com um toast
+    socket.broadcast.emit('new-user-connected', username);
   });
 
-  // emit -> Envia uma mensagem para o cliente
-  socket.emit('evento_para_socket_individual', 'Olá, cliente! Essa mensagem é só para você.');
+  socket.on('new-message', data => {
+    const mensagem = {
+      user: data.user || 'Anônimo',
+      text: data.text
+    };
 
-  // broadcast -> Envia uma mensagem para todos os clientes, exceto o que enviou
-  socket.broadcast.emit('evento_para_socket_global_menos_um', 'Olá, todos os clientes! Essa mensagem é para todos menos para você.');
-
-  // io.emit -> Envia uma mensagem para todos os clientes
-  io.emit('evento_para_socket_global', 'Olá, todos os clientes! Essa mensagem é para todos.');
+    mensagens.push(mensagem);
+    io.emit('messages', mensagens);
+  });
 });
-
 module.exports = server;

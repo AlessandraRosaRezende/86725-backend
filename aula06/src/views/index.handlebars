@@ -1,5 +1,70 @@
-<div>
-  <h1>Tudo pronto para trabalhar com WebSockets</h1>
+<div class="container-fluid mt-3">
+  <h1>CoderZap</h1>
+  <hr>
+  <div id="messages"></div>
+  <form class="form-inline" onsubmit="return addMessage(this)" autocomplete="off">
+    <input type="text" id="texto" class="form-control my-2 mr-2" placeholder="Fala ai ...">
+    <input class="btn btn-primary my-2" type="submit" value="Enviar!">
+  </form>
 </div>
+
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="/socket.io/socket.io.js"></script>
-<script src="/js/index.js"></script>
+
+<script>
+  const socket = io();
+  let user;
+
+  Swal.fire({
+    title: 'Bem vindo ao CoderZap!',
+    input: 'text',
+    text: 'Digite um nome para começar a conversar',
+    inputValidator: (value) => {
+      return !value && 'Você precisa digitar seu nome!'
+    },
+    allowOutsideClick: false,
+  }).then((result) => {
+    user = result.value;
+    // 🔔 Envia o nome ao servidor (evento de autenticação)
+    socket.emit('authenticated', user);
+  });
+
+  // Recebe todas as mensagens do chat
+  socket.on('messages', data => {
+    render(data);
+  });
+
+  // 🔔 Toast quando um novo usuário se conecta (exceto o próprio)
+  socket.on('new-user-connected', (username) => {
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'info',
+      title: `${username} acabou de entrar no chat!`,
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true
+    });
+  });
+
+  // Renderiza todas as mensagens
+  function render(listaMensagens) {
+    const html = listaMensagens.map(msg => {
+      return `<div><strong>${msg.user || 'Anônimo'}</strong>: ${msg.text}</div>`;
+    }).join("");
+    document.getElementById("messages").innerHTML = html;
+  }
+
+  // Envia nova mensagem ao servidor
+  function addMessage(e) {
+    const mensagem = {
+      text: document.getElementById('texto').value,
+      user: user
+    };
+
+    socket.emit('new-message', mensagem);
+    document.getElementById('texto').value = '';
+    document.getElementById('texto').focus();
+    return false;
+  }
+</script>
