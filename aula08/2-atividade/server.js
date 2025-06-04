@@ -1,6 +1,6 @@
+require('dotenv').config();
 const app = require("./src/app")
 
-const port = 8080;
-app.listen(port, () => {
-  console.log(`Servidor iniciado na porta ${port}`);
+app.listen(process.env.PORT, () => {
+  console.log(`Servidor iniciado na porta ${process.env.PORT}`);
 });
